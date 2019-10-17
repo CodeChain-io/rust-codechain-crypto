@@ -1,34 +1,36 @@
 language: rust
 rust:
-  - 1.36.0
+  - 1.38.0
 jobs:
   include:
     - stage: test
       name: osx
       os: osx
       install:
-        - rustup toolchain install nightly-2019-05-07
-        - rustup component add rustfmt-preview --toolchain nightly-2019-05-07
-        - rustup component add clippy-preview --toolchain nightly-2019-05-07
+        - rustup set profile minimal
+        - rustup toolchain install nightly-2019-10-13
+        - rustup component add rustfmt-preview --toolchain nightly-2019-10-13
+        - rustup component add clippy-preview --toolchain nightly-2019-10-13
       before_script:
         - cargo fetch --verbose
       script:
-        - cargo +nightly-2019-05-07 fmt -- --check || TEST_FAILED=true
-        - test $TEST_FAILED || cargo +nightly-2019-05-07 clippy --all-targets --all-features -- -D warnings || TEST_FAILED=true
+        - cargo +nightly-2019-10-13 fmt -- --check || TEST_FAILED=true
+        - test $TEST_FAILED || cargo +nightly-2019-10-13 clippy --all-targets --all-features -- -D warnings || TEST_FAILED=true
         - test $TEST_FAILED || RUST_BACKTRACE=1 cargo check || TEST_FAILED=true
         - test $TEST_FAILED || RUST_BACKTRACE=1 cargo test --verbose --all || TEST_FAILED=true
         - "! test $TEST_FAILED"
     - name: linux
       os: linux
       install:
-        - rustup toolchain install nightly-2019-05-07
-        - rustup component add rustfmt-preview --toolchain nightly-2019-05-07
-        - rustup component add clippy-preview --toolchain nightly-2019-05-07
+        - rustup set profile minimal
+        - rustup toolchain install nightly-2019-10-13
+        - rustup component add rustfmt-preview --toolchain nightly-2019-10-13
+        - rustup component add clippy-preview --toolchain nightly-2019-10-13
       before_script:
         - cargo fetch --verbose
       script:
-        - cargo +nightly-2019-05-07 fmt -- --check || TEST_FAILED=true
-        - test $TEST_FAILED || cargo +nightly-2019-05-07 clippy --all-targets --all-features -- -D warnings || TEST_FAILED=true
+        - cargo +nightly-2019-10-13 fmt -- --check || TEST_FAILED=true
+        - test $TEST_FAILED || cargo +nightly-2019-10-13 clippy --all-targets --all-features -- -D warnings || TEST_FAILED=true
         - test $TEST_FAILED || RUST_BACKTRACE=1 cargo check || TEST_FAILED=true
         - test $TEST_FAILED || RUST_BACKTRACE=1 cargo test --verbose --all || TEST_FAILED=true
         - "! test $TEST_FAILED"
