@@ -32,4 +32,5 @@ jobs:
           profile: minimal
           components: clippy, rustfmt
       - run: cargo fmt -- --check
+      - run: cargo check
       - run: cargo clippy --all --all-targets -- -D warnings
