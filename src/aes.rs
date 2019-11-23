@@ -14,7 +14,6 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-use error::SymmError;
 use primitives::H256;
 use rcrypto::aes::KeySize::KeySize256;
 use rcrypto::aes::{cbc_decryptor, cbc_encryptor};
@@ -23,6 +22,8 @@ use rcrypto::blockmodes::{CtrMode, PkcsPadding};
 use rcrypto::buffer::{BufferResult, ReadBuffer, RefReadBuffer, RefWriteBuffer, WriteBuffer};
 pub use rcrypto::symmetriccipher::SymmetricCipherError;
 use rcrypto::symmetriccipher::{Decryptor, Encryptor};
+
+use super::error::SymmError;
 
 fn is_underflow(result: BufferResult) -> bool {
     match result {
