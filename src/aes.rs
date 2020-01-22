@@ -14,6 +14,8 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+use aead::{generic_array::GenericArray, Aead, Error, NewAead};
+use aes_gcm_siv::Aes256GcmSiv;
 use primitives::H256;
 use rcrypto::aes::KeySize::KeySize256;
 use rcrypto::aes::{cbc_decryptor, cbc_encryptor};
@@ -67,6 +69,32 @@ pub fn decrypt(encrypted_data: &[u8], key: &H256, iv: &u128) -> Result<Vec<u8>, 
     }
 
     Ok(final_result)
+}
+
+// AES-256/GCM/Pkcs encryption.
+pub fn encrypt_gcm_siv(data: &[u8], key: &H256, nonce: &u128) -> Result<Vec<u8>, Error> {
+    let generic_key = GenericArray::clone_from_slice(key);
+    let aead = Aes256GcmSiv::new(generic_key);
+
+    let temp_nonce = &nonce.to_be_bytes();
+    let nonce = GenericArray::from_slice(&temp_nonce[0..12]);
+
+    let ciphertext = aead.encrypt(nonce, data).expect("encryption failure!");
+
+    Ok(ciphertext)
+}
+
+// AES-256/GCM/Pkcs decryption.
+pub fn decrypt_gcm_siv(encrypted_data: &[u8], key: &H256, input_nonce: &u128) -> Result<Vec<u8>, Error> {
+    let generic_key = GenericArray::clone_from_slice(key);
+    let aead = Aes256GcmSiv::new(generic_key);
+
+    let bytes_nonce = &input_nonce.to_be_bytes();
+    let nonce = GenericArray::from_slice(&bytes_nonce[0..12]);
+
+    let plaintext = aead.decrypt(nonce, encrypted_data.as_ref()).expect("decryption failure!");
+
+    Ok(plaintext)
 }
 
 /// Encrypt a message (CTR mode).
@@ -128,8 +156,10 @@ mod tests {
 
         let encrypted_data = encrypt(message.as_bytes(), &key, &iv).ok().unwrap();
         let decrypted_data = decrypt(&encrypted_data[..], &key, &iv).ok().unwrap();
-
+        let encrypted_data_with_gcm = encrypt_gcm_siv(message.as_bytes(), &key, &iv).ok().unwrap();
+        let decrypted_data_with_gcm = decrypt_gcm_siv(&encrypted_data_with_gcm[..], &key, &iv).ok().unwrap();
         assert_eq!(message.as_bytes(), &decrypted_data[..]);
+        assert_eq!(message.as_bytes(), &decrypted_data_with_gcm[..]);
     }
 
     #[test]
@@ -144,6 +174,9 @@ mod tests {
 
         let encrypted = encrypt(&input, &key, &iv).unwrap();
         let decrypted = decrypt(&encrypted, &key, &iv).unwrap();
+        let encrypted_with_gcm = encrypt_gcm_siv(&input, &key, &iv).unwrap();
+        let decrypted_with_gcm = decrypt_gcm_siv(&encrypted_with_gcm, &key, &iv).unwrap();
         assert_eq!(input, decrypted);
+        assert_eq!(input, decrypted_with_gcm);
     }
 }

@@ -9,6 +9,8 @@ ring = "0.14.6"
 quick-error = "1.2"
 rust-crypto = "0.2.36"
 primitives = { git = "https://github.com/CodeChain-io/rust-codechain-primitives.git", version = "0.4" }
+aes-gcm-siv = "0.3.0"
+aead = "0.2.0"
 
 [dev-dependencies]
 rand = "0.6.1"
