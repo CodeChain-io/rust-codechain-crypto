@@ -14,55 +14,55 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+use digest::Digest;
 use primitives::{H160, H256};
-use rcrypto::digest::Digest;
-use rcrypto::ripemd160::Ripemd160;
-use rcrypto::sha1::Sha1;
-use rcrypto::sha2::Sha256;
-use rcrypto::sha3::Sha3;
+use ripemd160::Ripemd160;
+use sha1::Sha1;
+use sha2::Sha256;
+use sha3::Keccak256;
 
 /// RIPEMD160
 #[inline]
 pub fn ripemd160<T: AsRef<[u8]>>(s: T) -> H160 {
     let input = s.as_ref();
-    let mut result = H160::default();
     let mut hasher = Ripemd160::new();
     hasher.input(input);
-    hasher.result(&mut *result);
-    result
+    let mut array: [u8; 20] = [0; 20];
+    array.copy_from_slice(&hasher.result());
+    H160(array)
 }
 
 /// SHA-1
 #[inline]
 pub fn sha1<T: AsRef<[u8]>>(s: T) -> H160 {
     let input = s.as_ref();
-    let mut result = H160::default();
     let mut hasher = Sha1::new();
     hasher.input(input);
-    hasher.result(&mut *result);
-    result
+    let mut array: [u8; 20] = [0; 20];
+    array.copy_from_slice(&hasher.result());
+    H160(array)
 }
 
 /// SHA-256
 #[inline]
 pub fn sha256<T: AsRef<[u8]>>(s: T) -> H256 {
     let input = s.as_ref();
-    let mut result = H256::default();
     let mut hasher = Sha256::new();
     hasher.input(input);
-    hasher.result(&mut *result);
-    result
+    let mut array: [u8; 32] = [0; 32];
+    array.copy_from_slice(&hasher.result());
+    H256(array)
 }
 
 /// KECCAK256
 #[inline]
 pub fn keccak256<T: AsRef<[u8]>>(s: T) -> H256 {
     let input = s.as_ref();
-    let mut result = H256::default();
-    let mut hasher = Sha3::keccak256();
+    let mut hasher = Keccak256::new();
     hasher.input(input);
-    hasher.result(&mut result);
-    result
+    let mut array: [u8; 32] = [0; 32];
+    array.copy_from_slice(&hasher.result());
+    H256(array)
 }
 
 #[cfg(test)]
