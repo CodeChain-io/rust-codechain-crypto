@@ -14,59 +14,35 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+use aes::{Aes128, Aes256};
+use block_modes::block_padding::Pkcs7;
+use block_modes::InvalidKeyIvLength;
+use block_modes::{BlockMode, Cbc};
+use ctr;
+use ctr::stream_cipher::generic_array::GenericArray;
+use ctr::stream_cipher::{NewStreamCipher, SyncStreamCipher, SyncStreamCipherSeek};
 use primitives::H256;
-use rcrypto::aes::KeySize::KeySize256;
-use rcrypto::aes::{cbc_decryptor, cbc_encryptor};
-use rcrypto::aessafe::AesSafe128Encryptor;
-use rcrypto::blockmodes::{CtrMode, PkcsPadding};
-use rcrypto::buffer::{BufferResult, ReadBuffer, RefReadBuffer, RefWriteBuffer, WriteBuffer};
-pub use rcrypto::symmetriccipher::SymmetricCipherError;
-use rcrypto::symmetriccipher::{Decryptor, Encryptor};
 
 use super::error::SymmError;
 
-fn is_underflow(result: BufferResult) -> bool {
-    match result {
-        BufferResult::BufferUnderflow => true,
-        BufferResult::BufferOverflow => false,
-    }
-}
+
+type Aes256Cbc = Cbc<Aes256, Pkcs7>;
+type Aes128Ctr = ctr::Ctr128<Aes128>;
 
 // AES-256/CBC/Pkcs encryption.
-pub fn encrypt(data: &[u8], key: &H256, iv: &u128) -> Result<Vec<u8>, SymmetricCipherError> {
-    let mut encryptor = cbc_encryptor(KeySize256, key, &iv.to_be_bytes(), PkcsPadding);
+pub fn encrypt(data: &[u8], key: &H256, iv: &u128) -> Result<Vec<u8>, InvalidKeyIvLength> {
+    let cipher = Aes256Cbc::new_var(&key, &iv.to_be_bytes())?;
+    let result = cipher.encrypt_vec(data);
 
-    let mut final_result = Vec::<u8>::new();
-    let mut read_buffer = RefReadBuffer::new(data);
-    let mut buffer = [0; 4096];
-    let mut write_buffer = RefWriteBuffer::new(&mut buffer);
-
-
-    let mut finish = false;
-    while !finish {
-        finish = is_underflow(encryptor.encrypt(&mut read_buffer, &mut write_buffer, true)?);
-        final_result.extend(write_buffer.take_read_buffer().take_remaining().iter().cloned());
-    }
-
-    Ok(final_result)
+    Ok(result)
 }
 
 // AES-256/CBC/Pkcs decryption.
-pub fn decrypt(encrypted_data: &[u8], key: &H256, iv: &u128) -> Result<Vec<u8>, SymmetricCipherError> {
-    let mut decryptor = cbc_decryptor(KeySize256, key, &iv.to_be_bytes(), PkcsPadding);
+pub fn decrypt(encrypted_data: &[u8], key: &H256, iv: &u128) -> Result<Vec<u8>, InvalidKeyIvLength> {
+    let cipher = Aes256Cbc::new_var(&key, &iv.to_be_bytes())?;
+    let result = cipher.decrypt_vec(&encrypted_data.to_vec()).unwrap();
 
-    let mut final_result = Vec::<u8>::new();
-    let mut read_buffer = RefReadBuffer::new(encrypted_data);
-    let mut buffer = [0; 4096];
-    let mut write_buffer = RefWriteBuffer::new(&mut buffer);
-
-    let mut finish = false;
-    while !finish {
-        finish = is_underflow(decryptor.decrypt(&mut read_buffer, &mut write_buffer, true)?);
-        final_result.extend(write_buffer.take_read_buffer().take_remaining().iter().cloned());
-    }
-
-    Ok(final_result)
+    Ok(result)
 }
 
 /// Encrypt a message (CTR mode).
@@ -74,8 +50,9 @@ pub fn decrypt(encrypted_data: &[u8], key: &H256, iv: &u128) -> Result<Vec<u8>, 
 /// Key (`k`) length and initialisation vector (`iv`) length have to be 16 bytes each.
 /// An error is returned if the input lengths are invalid.
 pub fn encrypt_128_ctr(k: &[u8], iv: &[u8], plain: &[u8], dest: &mut [u8]) -> Result<(), SymmError> {
-    let mut encryptor = CtrMode::new(AesSafe128Encryptor::new(k), iv.to_vec());
-    encryptor.encrypt(&mut RefReadBuffer::new(plain), &mut RefWriteBuffer::new(dest), true)?;
+    let mut cipher = Aes128Ctr::new(&GenericArray::from_slice(k), &GenericArray::from_slice(iv));
+    dest.copy_from_slice(plain);
+    cipher.apply_keystream(dest);
     Ok(())
 }
 
@@ -84,8 +61,10 @@ pub fn encrypt_128_ctr(k: &[u8], iv: &[u8], plain: &[u8], dest: &mut [u8]) -> Re
 /// Key (`k`) length and initialisation vector (`iv`) length have to be 16 bytes each.
 /// An error is returned if the input lengths are invalid.
 pub fn decrypt_128_ctr(k: &[u8], iv: &[u8], encrypted: &[u8], dest: &mut [u8]) -> Result<(), SymmError> {
-    let mut encryptor = CtrMode::new(AesSafe128Encryptor::new(k), iv.to_vec());
-    encryptor.decrypt(&mut RefReadBuffer::new(encrypted), &mut RefWriteBuffer::new(dest), true)?;
+    let mut cipher = Aes128Ctr::new(&GenericArray::from_slice(k), &GenericArray::from_slice(iv));
+    dest.copy_from_slice(encrypted);
+    cipher.seek(0);
+    cipher.apply_keystream(dest);
     Ok(())
 }
 
@@ -145,5 +124,33 @@ mod tests {
         let encrypted = encrypt(&input, &key, &iv).unwrap();
         let decrypted = decrypt(&encrypted, &key, &iv).unwrap();
         assert_eq!(input, decrypted);
+    }
+
+    #[test]
+    fn aes_256_cbc_encrypt_decrypt() {
+        let message = [1, 2, 3, 4, 5, 6, 7, 8];
+        let key = H256([0; 32]);
+        let iv = 0;
+
+        let encrypted_data = encrypt(&message, &key, &iv).ok().unwrap();
+        assert_eq!(encrypted_data, [45, 34, 87, 122, 38, 50, 190, 242, 253, 245, 138, 7, 196, 24, 58, 91]);
+
+        let decrypted_data = decrypt(&encrypted_data[..], &key, &iv).ok().unwrap();
+        assert_eq!(message, &decrypted_data[..]);
+    }
+
+    #[test]
+    fn aes_128_ctr_encrypt_decrypt() {
+        let plaintext = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
+        let key = [1; 16];
+        let iv = [1; 16];
+        let mut dest = [0; 10];
+
+        let _ = encrypt_128_ctr(&key, &iv, &plaintext, &mut dest);
+        assert_eq!(dest, [94, 118, 231, 156, 139, 128, 146, 51, 129, 171]);
+
+        let ciphertext = dest;
+        let _ = decrypt_128_ctr(&key, &iv, &ciphertext, &mut dest);
+        assert_eq!(plaintext, dest);
     }
 }

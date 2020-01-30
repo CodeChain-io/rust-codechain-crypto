@@ -47,13 +47,12 @@ quick_error! {
 
 #[allow(deprecated)]
 mod errors {
-    use rcrypto;
     use ring;
 
     quick_error! {
         #[derive(Debug)]
         pub enum SymmError wraps PrivSymmErr {
-            RustCrypto(e: rcrypto::symmetriccipher::SymmetricCipherError) {
+            RustCrypto(e: block_modes::InvalidKeyIvLength) {
                 display("symmetric crypto error")
                     from()
             }
@@ -74,8 +73,8 @@ mod errors {
         }
     }
 
-    impl From<rcrypto::symmetriccipher::SymmetricCipherError> for SymmError {
-        fn from(e: rcrypto::symmetriccipher::SymmetricCipherError) -> SymmError {
+    impl From<block_modes::InvalidKeyIvLength> for SymmError {
+        fn from(e: block_modes::InvalidKeyIvLength) -> SymmError {
             SymmError(PrivSymmErr::RustCrypto(e))
         }
     }
