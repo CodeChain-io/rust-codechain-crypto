@@ -14,6 +14,7 @@ sha2 = "0.8.1"
 sha3 = "0.8.2"
 ripemd160 = "0.8.0"
 digest = "0.8"
+blake2 = "0.8.1"
 
 [dev-dependencies]
 rand = "0.6.1"
