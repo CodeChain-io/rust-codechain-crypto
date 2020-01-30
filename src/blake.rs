@@ -14,9 +14,9 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+use blake2::digest::{Input, VariableOutput};
+use blake2::VarBlake2b;
 use primitives::{H128, H160, H256, H512};
-use rcrypto::blake2b::Blake2b;
-use rcrypto::digest::Digest;
 
 /// BLAKE128
 pub fn blake128<T: AsRef<[u8]>>(s: T) -> H128 {
@@ -51,32 +51,27 @@ pub trait Blake {
 }
 
 macro_rules! implement_blake {
-    ($self:ident) => {
+    ($self:ident, $size:expr) => {
         impl Blake for $self {
             fn blake<T: AsRef<[u8]>>(s: T) -> Self {
-                let input = s.as_ref();
-                let mut result = Self::default();
-                let mut hasher = Blake2b::new(result.len());
-                hasher.input(input);
-                hasher.result(&mut *result);
-                result
+                Self::blake_with_key(s, &[])
             }
             fn blake_with_key<T: AsRef<[u8]>>(s: T, key: &[u8]) -> Self {
                 let input = s.as_ref();
-                let mut result = Self::default();
-                let mut hasher = Blake2b::new_keyed(result.len(), &key);
+                let mut hasher = VarBlake2b::new_keyed(&key, $size);
                 hasher.input(input);
-                hasher.result(&mut *result);
-                result
+                let mut result: [u8; $size] = [0; $size];
+                result.copy_from_slice(&hasher.vec_result());
+                Self(result)
             }
         }
     };
 }
 
-implement_blake!(H128);
-implement_blake!(H160);
-implement_blake!(H256);
-implement_blake!(H512);
+implement_blake!(H128, 16);
+implement_blake!(H160, 20);
+implement_blake!(H256, 32);
+implement_blake!(H512, 64);
 
 /// Get the 256-bits BLAKE2b hash of the empty bytes string.
 pub const BLAKE_EMPTY: H256 = H256([
