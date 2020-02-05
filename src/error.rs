@@ -42,11 +42,18 @@ quick_error! {
         InvalidP {
             display("Invalid p argument of the scrypt encryption")
         }
+        InvalidOutputLen {
+            display("Invalid length of output")
+        }
+        InvalidParams {
+            display("Invalid parameters")
+        }
     }
 }
 
 #[allow(deprecated)]
 mod errors {
+    use crate::error::ScryptError;
     use ring;
 
     quick_error! {
@@ -76,6 +83,18 @@ mod errors {
     impl From<block_modes::InvalidKeyIvLength> for SymmError {
         fn from(e: block_modes::InvalidKeyIvLength) -> SymmError {
             SymmError(PrivSymmErr::RustCrypto(e))
+        }
+    }
+
+    impl From<scrypt::errors::InvalidOutputLen> for ScryptError {
+        fn from(_e: scrypt::errors::InvalidOutputLen) -> ScryptError {
+            ScryptError::InvalidOutputLen
+        }
+    }
+
+    impl From<scrypt::errors::InvalidParams> for ScryptError {
+        fn from(_e: scrypt::errors::InvalidParams) -> ScryptError {
+            ScryptError::InvalidParams
         }
     }
 }

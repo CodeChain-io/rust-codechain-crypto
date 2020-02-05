@@ -31,7 +31,6 @@
 // along with Parity.  If not, see <http://www.gnu.org/licenses/>.
 
 
-extern crate crypto as rcrypto;
 extern crate primitives;
 #[macro_use]
 extern crate quick_error;
