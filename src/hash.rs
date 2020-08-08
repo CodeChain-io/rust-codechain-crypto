@@ -67,32 +67,33 @@ pub fn keccak256<T: AsRef<[u8]>>(s: T) -> H256 {
 
 #[cfg(test)]
 mod tests {
-    use super::{keccak256, ripemd160, sha1, sha256};
+    use super::*;
+    use std::str::FromStr;
 
     #[test]
     fn _ripemd160() {
-        let expected = "108f07b8382412612c048d07d13f814118445acd".into();
+        let expected = H160::from_str("108f07b8382412612c048d07d13f814118445acd").unwrap();
         let result = ripemd160(b"hello");
         assert_eq!(result, expected);
     }
 
     #[test]
     fn _sha1() {
-        let expected = "aaf4c61ddcc5e8a2dabede0f3b482cd9aea9434d".into();
+        let expected = H160::from_str("aaf4c61ddcc5e8a2dabede0f3b482cd9aea9434d").unwrap();
         let result = sha1(b"hello");
         assert_eq!(result, expected);
     }
 
     #[test]
     fn _sha256() {
-        let expected = "2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824".into();
+        let expected = H256::from_str("2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824").unwrap();
         let result = sha256(b"hello");
         assert_eq!(result, expected);
     }
 
     #[test]
     fn _keccak256() {
-        let expected = "1c8aff950685c2ed4bc3174f3472287b56d9517b9c948127319a09a7a36deac8".into();
+        let expected = H256::from_str("1c8aff950685c2ed4bc3174f3472287b56d9517b9c948127319a09a7a36deac8").unwrap();
         let result = keccak256(b"hello");
         assert_eq!(result, expected);
     }
