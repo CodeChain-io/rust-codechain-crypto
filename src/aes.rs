@@ -31,7 +31,7 @@ type Aes128Ctr = ctr::Ctr128<Aes128>;
 
 // AES-256/CBC/Pkcs encryption.
 pub fn encrypt(data: &[u8], key: &H256, iv: &u128) -> Result<Vec<u8>, InvalidKeyIvLength> {
-    let cipher = Aes256Cbc::new_var(&key, &iv.to_be_bytes())?;
+    let cipher = Aes256Cbc::new_var(key.as_ref(), &iv.to_be_bytes())?;
     let result = cipher.encrypt_vec(data);
 
     Ok(result)
@@ -39,7 +39,7 @@ pub fn encrypt(data: &[u8], key: &H256, iv: &u128) -> Result<Vec<u8>, InvalidKey
 
 // AES-256/CBC/Pkcs decryption.
 pub fn decrypt(encrypted_data: &[u8], key: &H256, iv: &u128) -> Result<Vec<u8>, InvalidKeyIvLength> {
-    let cipher = Aes256Cbc::new_var(&key, &iv.to_be_bytes())?;
+    let cipher = Aes256Cbc::new_var(key.as_ref(), &iv.to_be_bytes())?;
     let result = cipher.decrypt_vec(&encrypted_data.to_vec()).unwrap();
 
     Ok(result)
@@ -102,7 +102,7 @@ mod tests {
         // a password. For the purposes of this example, the key and
         // iv are just random values.
         let mut rng = OsRng::new().ok().unwrap();
-        rng.fill_bytes(&mut key);
+        rng.fill_bytes(key.as_mut());
         let iv = rng.gen();
 
         let encrypted_data = encrypt(message.as_bytes(), &key, &iv).ok().unwrap();
@@ -118,7 +118,7 @@ mod tests {
         let mut key = H256([0; 32]);
 
         let mut rng = OsRng::new().unwrap();
-        rng.fill_bytes(&mut key);
+        rng.fill_bytes(key.as_mut());
         let iv = rng.gen();
 
         let encrypted = encrypt(&input, &key, &iv).unwrap();

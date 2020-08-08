@@ -94,25 +94,26 @@ pub const BLAKE_EMPTY_LIST_RLP: H256 = H256([
 #[cfg(test)]
 mod tests {
     use std::panic::catch_unwind;
+    use std::str::FromStr;
 
     use super::*;
 
     #[test]
     fn _blake128() {
         let result = H128::blake(b"hello");
-        assert_eq!(H128::from("46fb7408d4f285228f4af516ea25851b"), result);
+        assert_eq!(H128::from_str("46fb7408d4f285228f4af516ea25851b").unwrap(), result);
     }
 
     #[test]
     fn _blake256() {
-        let expected = "324dcf027dd4a30a932c441f365a25e86b173defa4b8e58948253471b81b72cf".into();
+        let expected = H256::from_str("324dcf027dd4a30a932c441f365a25e86b173defa4b8e58948253471b81b72cf").unwrap();
         let result = blake256(b"hello");
         assert_eq!(result, expected);
     }
 
     #[test]
     fn _blake512() {
-        let expected = "e4cfa39a3d37be31c59609e807970799caa68a19bfaa15135f165085e01d41a65ba1e1b146aeb6bd0092b49eac214c103ccfa3a365954bbbe52f74a2b3620c94".into();
+        let expected = H512::from_str("e4cfa39a3d37be31c59609e807970799caa68a19bfaa15135f165085e01d41a65ba1e1b146aeb6bd0092b49eac214c103ccfa3a365954bbbe52f74a2b3620c94").unwrap();
         let result = blake512(b"hello");
         assert_eq!(result, expected);
     }
