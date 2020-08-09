@@ -18,7 +18,6 @@ use aes::{Aes128, Aes256};
 use block_modes::block_padding::Pkcs7;
 use block_modes::InvalidKeyIvLength;
 use block_modes::{BlockMode, Cbc};
-use ctr;
 use ctr::stream_cipher::generic_array::GenericArray;
 use ctr::stream_cipher::{NewStreamCipher, SyncStreamCipher, SyncStreamCipherSeek};
 use primitives::H256;

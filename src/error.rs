@@ -54,7 +54,6 @@ quick_error! {
 #[allow(deprecated)]
 mod errors {
     use crate::error::ScryptError;
-    use ring;
 
     quick_error! {
         #[derive(Debug)]
