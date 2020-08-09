@@ -16,8 +16,6 @@
 
 use std::num::NonZeroU32;
 
-use ring;
-
 pub struct Salt<'a>(pub &'a [u8]);
 pub struct Secret<'a>(pub &'a [u8]);
 
