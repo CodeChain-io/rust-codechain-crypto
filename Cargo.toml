@@ -7,7 +7,7 @@ edition = "2018"
 [dependencies]
 ring = "0.14.6"
 quick-error = "1.2"
-primitives = { git = "https://github.com/CodeChain-io/rust-codechain-primitives.git", version = "0.5" }
+primitives = { git = "https://github.com/CodeChain-io/rust-codechain-primitives.git", version = "0.5", tag = "v0.5.1" }
 sha-1 = "0.8.2"
 sha2 = "0.8.1"
 sha3 = "0.8.2"
